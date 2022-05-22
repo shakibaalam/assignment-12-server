@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const app = express();
@@ -31,6 +31,7 @@ async function run() {
     try {
         await client.connect();
         const productCollection = client.db("paintgenix").collection("products");
+        const OrderCollection = client.db("paintgenix").collection("orders");
         const featuredCollection = client.db("paintgenix").collection("featured");
 
         //get all products
@@ -38,6 +39,21 @@ async function run() {
             const products = await productCollection.find().toArray();
             res.send(products);
         });
+
+        //get one product
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const product = await productCollection.findOne(filter);
+            res.send(product);
+        });
+
+        // post order
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            const result = await OrderCollection.insertOne(order);
+            res.send(result)
+        })
 
         //get all featured
         app.get('/featured', async (req, res) => {
