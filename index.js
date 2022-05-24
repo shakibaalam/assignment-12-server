@@ -33,6 +33,7 @@ async function run() {
         const productCollection = client.db("paintgenix").collection("products");
         const OrderCollection = client.db("paintgenix").collection("orders");
         const featuredCollection = client.db("paintgenix").collection("featured");
+        const userCollection = client.db("paintgenix").collection("users");
 
         //get all products
         app.get('/products', async (req, res) => {
@@ -53,6 +54,20 @@ async function run() {
             const order = req.body;
             const result = await OrderCollection.insertOne(order);
             res.send(result)
+        })
+
+        //login or creating user info
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1d' });
+            res.send({ result, token })
         })
 
         //get all featured
