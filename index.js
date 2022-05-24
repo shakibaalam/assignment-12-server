@@ -82,6 +82,13 @@ async function run() {
             res.send(users)
         });
 
+        //get a specific user
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            res.send(user);
+        });
+
         //delete a user
         app.delete('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
@@ -106,6 +113,18 @@ async function run() {
             };
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
+        });
+
+        //update  user info
+        app.patch('/user/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const userInfo = req.body;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: userInfo
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result)
         })
 
         //login or creating user info
