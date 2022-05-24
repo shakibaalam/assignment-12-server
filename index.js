@@ -82,6 +82,13 @@ async function run() {
             res.send(users)
         });
 
+        //delete a user
+        app.delete('/user/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const result = await userCollection.deleteOne({ email: email });
+            res.send(result);
+        })
+
         //login or creating user info
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
