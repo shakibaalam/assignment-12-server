@@ -49,6 +49,12 @@ async function run() {
             res.send(product);
         });
 
+        //get all orders
+        app.get('/allorders', async (req, res) => {
+            const orders = await OrderCollection.find().toArray();
+            res.send(orders);
+        });
+
         // get orders for users
         app.get('/orders', verifyJWT, async (req, res) => {
             const email = req.query.email;
