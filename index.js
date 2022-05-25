@@ -35,6 +35,17 @@ async function run() {
         const featuredCollection = client.db("paintgenix").collection("featured");
         const userCollection = client.db("paintgenix").collection("users");
 
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                return res.status(403).send({ message: "Forbidden to made an admin" })
+            }
+        }
+
         //get all products
         app.get('/products', async (req, res) => {
             const products = await productCollection.find().toArray();
@@ -47,6 +58,21 @@ async function run() {
             const filter = { _id: ObjectId(id) }
             const product = await productCollection.findOne(filter);
             res.send(product);
+        });
+
+        //add a product 
+        app.post('/products', verifyJWT, verifyAdmin, async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
+
+        //delete a products
+        app.delete('/products/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await productCollection.deleteOne(filter);
+            res.send(result);
         });
 
         //get all orders
@@ -77,20 +103,20 @@ async function run() {
         })
 
         //get all users info
-        app.get('/user', verifyJWT, async (req, res) => {
+        app.get('/user', verifyJWT, verifyAdmin, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users)
         });
 
         //get a specific user
-        app.get('/user/:email', async (req, res) => {
+        app.get('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             res.send(user);
         });
 
         //delete a user
-        app.delete('/user/:email', verifyJWT, async (req, res) => {
+        app.delete('/user/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const result = await userCollection.deleteOne({ email: email });
             res.send(result);
@@ -105,7 +131,7 @@ async function run() {
         })
 
         //create and auto update admin 
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -128,7 +154,7 @@ async function run() {
         })
 
         //login or creating user info
-        app.put('/user/:email', async (req, res) => {
+        app.put('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const user = req.body;
             const filter = { email: email };
